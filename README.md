@@ -1,4 +1,6 @@
-# wallet-egress-audit
+# murmur0
+
+> *murmur* — the faint chatter a process makes on the wire · *0* — what its third-party egress should be.
 
 Local privacy audit of **Chrome browser-extension crypto wallets** by their network egress.
 Ports the [@r4nk0X "IP Exposure Scorecard"](https://www.theopensourcepress.com/crypto-wallet-ip-exposure-scorecard-2026/)

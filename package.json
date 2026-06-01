@@ -1,9 +1,9 @@
 {
-  "name": "wallet-egress-audit",
+  "name": "murmur0",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Local privacy audit of Chrome extension crypto wallets by their network egress",
+  "description": "murmur0 — listens to the faint chatter Chrome extension wallets make on the wire, and scores it",
   "bin": {
     "audit": "bin/audit"
   },
