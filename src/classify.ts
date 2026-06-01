@@ -59,7 +59,9 @@ export async function classifyHosts(
 
     if (CHROME_INFRA.some((re) => re.test(host)) || baseline.has(host)) {
       c.party = "chrome";
-    } else if (firstParty.has(etld)) {
+    } else if (firstParty.has(etld) || firstParty.has(host.toLowerCase())) {
+      // first-party match on eTLD+1 OR full host (covers vendor content on a
+      // shared public suffix, e.g. metamask.github.io).
       c.party = "first";
     } else {
       c.party = "third";

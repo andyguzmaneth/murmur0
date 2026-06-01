@@ -11,6 +11,11 @@ export function renderReport(r: ScoreResult): string {
   lines.push(`- Unique third-party hosts: **${r.uniqueThirdPartyHosts}** (${r.uniqueThirdPartyEtldPlusOne} distinct domains)`);
   lines.push(`- First-party hosts: ${r.firstPartyHosts.length} · Chrome-infra (excluded): ${r.chromeHosts.length}`);
   lines.push(`- Capture backends: ${r.captureBackends.join(" + ") || "none"}`);
+  if (r.excludedWebRequests > 0) {
+    lines.push(
+      `- Excluded ${r.excludedWebRequests} request(s) from ${r.excludedWebHosts.length} web page host(s) open in the browser (not wallet egress)`,
+    );
+  }
   lines.push("");
 
   if (r.breakdown.length > 0) {

@@ -7,3 +7,6 @@ profiles/
 *.keylog
 keys.log
 .DS_Store
+
+# Generated per-machine; run `npm run baseline` to create
+fingerprints/chrome-baseline.json

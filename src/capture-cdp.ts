@@ -52,6 +52,11 @@ export class CdpCapturer {
     this.sessions.add(client);
 
     const targetType = target.type();
+    // service_worker / background_page / other belong to the extension in a
+    // single-extension profile. page targets are classified per-request below.
+    const targetIsExtension =
+      targetType === "service_worker" || targetType === "background_page" || targetType === "other";
+
     client.on("Network.requestWillBeSent", (params: any) => {
       const url: string = params?.request?.url ?? "";
       if (!url.startsWith("http") && !url.startsWith("ws")) return; // skip data:, chrome-extension:, blob:
@@ -61,6 +66,12 @@ export class CdpCapturer {
       } catch {
         return;
       }
+      // Wallet egress if the target is the extension, or the document is an
+      // extension page (chrome-extension://). Anything else is a web page open
+      // in the same browser and must not count against the wallet.
+      const docUrl: string = params?.documentURL ?? "";
+      const scope: "extension" | "web" =
+        targetIsExtension || docUrl.startsWith("chrome-extension://") ? "extension" : "web";
       this.requests.push({
         ts: typeof params.wallTime === "number" ? params.wallTime * 1000 : Date.now(),
         url,
@@ -69,6 +80,7 @@ export class CdpCapturer {
         resourceType: params?.type,
         initiator: params?.initiator?.url || params?.initiator?.type,
         targetType,
+        scope,
         source: "cdp",
       });
     });

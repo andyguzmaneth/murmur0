@@ -19,12 +19,17 @@ const PHASE_SCRIPT: Record<Phase, string> = {
 };
 
 async function main() {
-  const [walletName, phaseArg] = process.argv.slice(2);
-  const decrypt = process.argv.includes("--decrypt");
+  const argv = process.argv.slice(2);
+  const positionals = argv.filter((a) => !a.startsWith("-"));
+  const [walletName, phaseArg] = positionals;
+  const decrypt = argv.includes("--decrypt");
+  const noPcap = argv.includes("--no-pcap");
+  const secondsFlag = argv.findIndex((a) => a === "--seconds");
+  const autoSeconds = secondsFlag >= 0 ? Number(argv[secondsFlag + 1]) : undefined;
   const phase = (phaseArg ?? "cold") as Phase;
 
   if (!walletName) {
-    console.error("usage: npm run audit -- <wallet> [cold|onboarding|active] [--decrypt]");
+    console.error("usage: npm run audit -- <wallet> [cold|onboarding|active] [--decrypt] [--no-pcap] [--seconds N]");
     process.exit(1);
   }
   if (!PHASES.includes(phase)) {
@@ -54,15 +59,21 @@ async function main() {
   // password in this terminal. If unavailable, we proceed CDP-only.
   const pcapPath = path.join(reportDir, "session.pcap");
   const pcap = new PcapCapturer(pcapPath);
-  const pcapOn = await pcap.start();
-  console.log(pcapOn ? "▸ pcap backstop on (sudo tcpdump, pktap)" : "▸ pcap backstop off (no tcpdump)");
+  const pcapOn = noPcap ? false : await pcap.start();
+  console.log(
+    noPcap ? "▸ pcap backstop disabled (--no-pcap)" : pcapOn ? "▸ pcap backstop on (sudo tcpdump, pktap)" : "▸ pcap backstop off (no tcpdump)",
+  );
 
   console.log("\n" + "─".repeat(64));
   console.log(PHASE_SCRIPT[phase]);
   console.log("─".repeat(64));
-  console.log("Capturing all egress. Press Ctrl-C when the phase is done.\n");
-
-  await waitForSigint(() => capturer.count);
+  if (autoSeconds && autoSeconds > 0) {
+    console.log(`Capturing for ${autoSeconds}s, then stopping automatically.\n`);
+    await waitForStop(() => capturer.count, autoSeconds);
+  } else {
+    console.log("Capturing all egress. Press Ctrl-C when the phase is done.\n");
+    await waitForStop(() => capturer.count);
+  }
 
   console.log("\n▸ stopping capture …");
   const cdpRequests = capturer.stop();
@@ -82,13 +93,22 @@ async function analyze(
   timestamp: string,
   reportDir: string,
 ) {
+  // Keep the full forensic record (extension + web) in events.jsonl …
   await writeFile(
     path.join(reportDir, "events.jsonl"),
     requests.map((r) => JSON.stringify(r)).join("\n") + "\n",
   );
 
-  const hosts = await classifyHosts(requests, cfg);
-  const result = await score(hosts, cfg, phase, timestamp, requests.length);
+  // … but only score the wallet's own egress. Web pages open in the same
+  // browser (dapps, stray tabs) are not the wallet phoning home.
+  const walletReqs = requests.filter((r) => r.scope === "extension");
+  const webReqs = requests.filter((r) => r.scope === "web");
+  const webHosts = [...new Set(webReqs.map((r) => r.host))].sort();
+
+  const hosts = await classifyHosts(walletReqs, cfg);
+  const result = await score(hosts, cfg, phase, timestamp, walletReqs.length);
+  result.excludedWebRequests = webReqs.length;
+  result.excludedWebHosts = webHosts;
   const md = renderReport(result);
 
   await writeFile(path.join(reportDir, "hosts.json"), JSON.stringify(hosts, null, 2));
@@ -108,18 +128,23 @@ async function loadWallet(name: string): Promise<WalletConfig> {
   }
 }
 
-function waitForSigint(count: () => number): Promise<void> {
+/** Resolves on Ctrl-C, or after `seconds` if given (for unattended cold runs). */
+function waitForStop(count: () => number, seconds?: number): Promise<void> {
   return new Promise((resolve) => {
-    const handler = () => {
-      process.off("SIGINT", handler);
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      clearInterval(iv);
+      if (timer) clearTimeout(timer);
+      process.off("SIGINT", finish);
       resolve();
     };
-    process.on("SIGINT", handler);
-    // heartbeat so the operator sees progress
+    process.on("SIGINT", finish);
     const iv = setInterval(() => {
       process.stdout.write(`\r  …captured ${count()} requests`);
     }, 1000);
-    process.on("SIGINT", () => clearInterval(iv));
+    const timer = seconds && seconds > 0 ? setTimeout(finish, seconds * 1000) : null;
   });
 }
 

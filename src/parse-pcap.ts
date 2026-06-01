@@ -64,6 +64,9 @@ function rec(tsEpoch: string | undefined, host: string, url: string, ip?: string
     host: h,
     method: "GET",
     resourceType: ip ? "tls" : "dns",
+    // pcap is process-level: it can't tell extension from web-page traffic, so
+    // in a wallet-only session this is wallet egress. Treated as such here.
+    scope: "extension",
     source: "pcap",
   };
 }

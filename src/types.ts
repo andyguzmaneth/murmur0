@@ -17,6 +17,9 @@ export interface CapturedRequest {
   resourceType?: string;
   initiator?: string;
   targetType?: string;
+  /** "extension" = originated from the wallet (its SW or chrome-extension:// UI);
+   *  "web" = a web page open in the same browser (NOT wallet egress). */
+  scope: "extension" | "web";
   source: "cdp" | "pcap";
 }
 
@@ -63,4 +66,7 @@ export interface ScoreResult {
   captureBackends: Array<"cdp" | "pcap">;
   /** Hosts seen by the pcap backstop but NOT by CDP: possible out-of-band traffic. */
   pcapOnlyHosts: string[];
+  /** Web-page requests excluded from scoring (not wallet egress). */
+  excludedWebRequests: number;
+  excludedWebHosts: string[];
 }

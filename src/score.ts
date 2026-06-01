@@ -57,5 +57,7 @@ export async function score(
     unknownThirdPartyHosts: thirdParty.filter((h) => h.category === "unknown").map((h) => h.host),
     captureBackends: [...backends],
     pcapOnlyHosts,
+    excludedWebRequests: 0,
+    excludedWebHosts: [],
   };
 }
