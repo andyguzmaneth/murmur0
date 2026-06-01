@@ -1,0 +1,59 @@
+{
+  "_comment": "Curated high-signal third-party SaaS fingerprints. Matched against request hostname (host regex) and optionally URL path (path regex). Penalty is taken from the category. This is the Milestone-1 layer; Tracker Radar + Exodus joins are layered on in Milestone 2.",
+  "categories": {
+    "session-replay":   { "penalty": 14, "label": "Session replay" },
+    "attribution":      { "penalty": 12, "label": "Attribution / install tracking" },
+    "ads":              { "penalty": 12, "label": "Advertising" },
+    "analytics":        { "penalty": 10, "label": "Product analytics" },
+    "fraud-device":     { "penalty": 10, "label": "Device fingerprinting / fraud" },
+    "install-id":       { "penalty": 6,  "label": "Stable install ID" },
+    "crash-monitoring": { "penalty": 4,  "label": "Crash / error monitoring" },
+    "remote-config":    { "penalty": 3,  "label": "Remote config" },
+    "tag-manager":      { "penalty": 3,  "label": "Tag manager" },
+    "cdn":              { "penalty": 1,  "label": "Third-party CDN" },
+    "unknown":          { "penalty": 3,  "label": "Unclassified third party" }
+  },
+  "patterns": [
+    { "name": "AppsFlyer",            "category": "attribution",      "host": "(^|\\.)appsflyer\\.com$" },
+    { "name": "AppsFlyer SDK",        "category": "attribution",      "host": "(^|\\.)appsflyersdk\\.com$" },
+    { "name": "Branch",               "category": "attribution",      "host": "(^|\\.)branch\\.io$" },
+    { "name": "Adjust",               "category": "attribution",      "host": "(^|\\.)adjust\\.com$" },
+
+    { "name": "Segment",              "category": "analytics",        "host": "(^|\\.)segment\\.(io|com)$" },
+    { "name": "Segment (EU)",         "category": "analytics",        "host": "(^|\\.)segmentapis\\.com$" },
+    { "name": "Amplitude",            "category": "analytics",        "host": "(^|\\.)amplitude\\.com$" },
+    { "name": "Mixpanel",             "category": "analytics",        "host": "(^|\\.)(mixpanel\\.com|mxpnl\\.com)$" },
+    { "name": "Heap",                 "category": "analytics",        "host": "(^|\\.)heap(analytics)?\\.(io|com)$" },
+    { "name": "PostHog",              "category": "analytics",        "host": "(^|\\.)posthog\\.com$" },
+    { "name": "Google Analytics",     "category": "analytics",        "host": "(^|\\.)(google-analytics\\.com|analytics\\.google\\.com)$" },
+    { "name": "Google Analytics GA4", "category": "analytics",        "host": "(^|\\.)googletagmanager\\.com$", "path": "/(g|mp)/collect" },
+
+    { "name": "Google Tag Manager",   "category": "tag-manager",      "host": "(^|\\.)googletagmanager\\.com$" },
+
+    { "name": "FullStory",            "category": "session-replay",   "host": "(^|\\.)(fullstory\\.com|fs\\.com)$" },
+    { "name": "Hotjar",               "category": "session-replay",   "host": "(^|\\.)hotjar\\.com$" },
+    { "name": "LogRocket",            "category": "session-replay",   "host": "(^|\\.)logrocket\\.(io|com)$" },
+    { "name": "Smartlook",            "category": "session-replay",   "host": "(^|\\.)smartlook\\.com$" },
+
+    { "name": "Sentry (SaaS)",        "category": "crash-monitoring", "host": "(^|\\.)sentry\\.io$" },
+    { "name": "Sentry (envelope)",    "category": "crash-monitoring", "host": ".*",                    "path": "/api/\\d+/(envelope|store)/" },
+    { "name": "Bugsnag",              "category": "crash-monitoring", "host": "(^|\\.)bugsnag\\.com$" },
+    { "name": "Datadog RUM",          "category": "crash-monitoring", "host": "(^|\\.)(browser-intake-.*datadoghq\\.com|datadoghq\\.(com|eu))$" },
+    { "name": "Crashlytics",          "category": "crash-monitoring", "host": "(^|\\.)crashlytics\\.com$" },
+    { "name": "Crashlytics (pa)",     "category": "crash-monitoring", "host": "(^|\\.)crashlyticsreports-pa\\.googleapis\\.com$" },
+    { "name": "Rollbar",              "category": "crash-monitoring", "host": "(^|\\.)rollbar\\.com$" },
+
+    { "name": "Firebase Installations","category": "install-id",      "host": "(^|\\.)firebaseinstallations\\.googleapis\\.com$" },
+    { "name": "Firebase Remote Config","category": "remote-config",   "host": "(^|\\.)firebaseremoteconfig(realtime)?\\.googleapis\\.com$" },
+    { "name": "Firebase Logging",     "category": "analytics",        "host": "(^|\\.)firebaselogging(-pa)?\\.googleapis\\.com$" },
+
+    { "name": "ThreatMetrix",         "category": "fraud-device",     "host": "(^|\\.)online-metrix\\.net$" },
+    { "name": "FingerprintJS",        "category": "fraud-device",     "host": "(^|\\.)(fpjs\\.io|fingerprint\\.com|fpcdn\\.io)$" },
+
+    { "name": "Braze",                "category": "analytics",        "host": "(^|\\.)braze\\.(com|eu)$" },
+    { "name": "Customer.io",          "category": "analytics",        "host": "(^|\\.)customer\\.io$" },
+    { "name": "Intercom",             "category": "analytics",        "host": "(^|\\.)intercom\\.io$" },
+
+    { "name": "Cloudflare Insights",  "category": "analytics",        "host": "(^|\\.)cloudflareinsights\\.com$" }
+  ]
+}

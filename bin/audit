@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Thin wrapper: ./bin/audit <wallet> [cold|onboarding|active] [--decrypt]
+set -euo pipefail
+cd "$(dirname "$0")/.."
+exec npx tsx src/audit.ts "$@"

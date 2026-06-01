@@ -1,0 +1,9 @@
+node_modules/
+dist/
+reports/
+extensions/
+profiles/
+*.pcap
+*.keylog
+keys.log
+.DS_Store

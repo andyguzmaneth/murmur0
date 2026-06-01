@@ -1,0 +1,14 @@
+{
+  "name": "metamask",
+  "displayName": "MetaMask",
+  "storeId": "nkbihfbeogaeaoehlefnkodbefgpgknn",
+  "firstPartyDomains": [
+    "metamask.io",
+    "infura.io",
+    "consensys.io",
+    "consensys.net",
+    "codefi.network"
+  ],
+  "onboarding": "Click 'Create a new wallet' (or 'Import'), set a password, skip the secret-recovery-phrase backup if just probing. Decline the optional metrics opt-in prompt to test the baseline; run a second pass accepting it to compare.",
+  "notes": "MetaMask is known to use Segment (analytics) and Sentry (crash). Those should surface as third-party. Infura is its default RPC (Consensys-owned) — treated first-party here."
+}
