@@ -2,9 +2,9 @@ import { categoryPenalty } from "./classify.js";
 import type { ClassifiedHost, Phase, ScoreResult, ScoreBreakdownRow, WalletConfig } from "./types.js";
 
 /**
- * Rubric (mirrors Ranko, weighted by category): start at 100, subtract a
- * penalty per distinct THIRD-PARTY host. First-party + Chrome-infra hosts are
- * counted but never penalized. Clamp to [0, 100].
+ * Rubric (weighted by category): start at 100, subtract a penalty per distinct
+ * THIRD-PARTY host. First-party and Chrome-infra hosts are counted but never
+ * penalized. Clamp to [0, 100].
  */
 export async function score(
   hosts: ClassifiedHost[],

@@ -1,13 +1,12 @@
-# Wallet Egress Audit — Implementation Plan
+# murmur0: Implementation Plan
 
-> Proposed project: `~/projects/wallet-egress-audit` (name is a placeholder — easy to rename, e.g. `walletscope`).
-> On approval: create the dir, drop this file in as `PLAN.md` + a short `README.md`, then create the GitHub repo and start the v1 slice.
+> Project lives at `~/projects/murmur0` (repo: github.com/andyguzmaneth/murmur0).
 
 ## Context
 
-Ranko X (@r4nk0X) published a "Crypto Wallet IP Exposure Scorecard 2026" — he scored mobile wallets 0–100 purely by **who they phone home to** (unique IPs + domains contacted on launch), classifying each endpoint against known third-party SaaS (AppsFlyer, Firebase, Sentry, Segment, Amplitude…). His method: clean Android device, APKs, all traffic through PCAPdroid, endpoint enumeration — no payload decryption needed to make the privacy argument.
+A known approach to mobile-wallet privacy scores each wallet from 0 to 100 by who it phones home to. You count the unique IPs and domains it contacts on launch, then classify each endpoint against known third-party SaaS such as AppsFlyer, Firebase, Sentry, Segment, and Amplitude. The capture runs on a clean Android device with all traffic logged at the packet level. Endpoint enumeration alone carries the privacy argument; no payload decryption is needed.
 
-We want to **port this methodology to Chrome browser-extension wallets**, run entirely on a local MacBook (residential wifi, no VPN), and produce a reproducible, scored privacy report per wallet plus a cross-wallet comparison.
+We take that same idea to Chrome browser-extension wallets, run it entirely on a local MacBook (residential wifi, no VPN), and produce a reproducible scored privacy report per wallet plus a cross-wallet comparison.
 
 **Why extensions are different (and in our favor):**
 - Extension source is **plain JS on disk** + a `manifest.json` that **declares** allowed egress (`host_permissions`) — free static ground truth.
@@ -89,12 +88,12 @@ wallet-egress-audit/
 4. Console prints the **phase script** to follow (e.g. cold: "leave it 60s"; onboarding: "create a new wallet"; active: "view balances, switch network, open a swap quote — do NOT send"). You perform it, then Ctrl-C.
 5. On stop: teardown, then `parse-pcap → classify → score → report`. Cross-check: any host in pcap **not** seen in CDP gets flagged (potential out-of-band / something CDP missed).
 
-### Scoring rubric (start 100, subtract; mirrors Ranko, weighted by Tracker Radar)
+### Scoring rubric (start at 100, subtract, weighted by Tracker Radar)
 - **0** for first-party + benign CDN/price-feed/RPC.
 - **Stable-ID install pings** (Firebase Installations): medium.
 - **Analytics/attribution** (Segment, Amplitude, Mixpanel, AppsFlyer, GA4): high (weighted by Tracker Radar `prevalence` × `fingerprinting`).
 - **Crash/monitoring** (Sentry, Bugsnag, Crashlytics, Datadog): low–medium.
-- **Exposure surface**: small penalty per unique third-party IP + domain (Ranko's core signal).
+- **Exposure surface**: a small penalty per unique third-party IP and domain. This is the core signal.
 - **Static axis (separate, reported alongside):** `host_permissions` breadth — `<all_urls>` / `*://*/*` is a major flag (can read every site you visit), independent of observed egress.
 - Output: numeric score + a breakdown table (endpoint → entity → category → penalty) so the number is auditable, not a black box.
 
@@ -123,7 +122,7 @@ Each gets a `wallets/<name>.json`: Chrome Web Store ID, known first-party domain
 
 **Milestone 2 — full capture + classify:** add `capture-pcap.ts` + `parse-pcap.ts` + baseline subtraction + Tracker Radar/Exodus join + CDP↔pcap cross-check. Add onboarding + active phases.
 
-**Milestone 3 — scale + compare:** run the wallet matrix, generate `comparison.md`. Tune the rubric against Ranko's published numbers as a sanity check.
+**Milestone 3, scale and compare:** run the wallet matrix and generate `comparison.md`. Sanity-check that the scores come out directionally sensible.
 
 **Milestone 4 (optional/later):** `--decrypt` deep-dive (SSLKEYLOGFILE → tshark payloads) for any wallet that scores suspiciously; optional report-viewer UI; consider Playwright full-automation only if manual drive proves too slow.
 
@@ -135,7 +134,7 @@ Each gets a `wallets/<name>.json`: Chrome Web Store ID, known first-party domain
 - **Baseline correctness:** no-extension run → its domain set must be fully subtracted (a clean run should approach 100).
 - **Cross-validation:** CDP host set ≈ pcap SNI/DNS host set; investigate any delta (this is itself a finding).
 - **Decryption path:** with `--decrypt`, confirm tshark decrypts at least one HTTPS body using the keylog.
-- **Sanity vs ground truth:** a privacy-leaning wallet (Keplr/Taho) should score high; a CEX-linked one lower — directionally matching Ranko.
+- **Sanity vs ground truth:** a privacy-leaning wallet (Keplr/Taho) should score high and a CEX-linked one lower. The direction is what matters.
 
 ---
 

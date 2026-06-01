@@ -2,28 +2,35 @@
 
 ![status: experimental](https://img.shields.io/badge/status-experimental-orange)
 
-> *murmur* — the faint chatter a process makes on the wire · *0* — what its third-party egress should be.
+> *murmur*: the faint chatter a process makes on the wire. *0*: what its third-party egress should be.
 
-> ⚠️ **Experimental.** Early-stage research tool. Methodology, scoring rubric, and APIs
-> are unstable and will change. Scores are directional, not authoritative — a starting
-> point for investigation, not a verdict. See *Limitation* below.
+**Experimental.** This is an early research tool. The methodology, the scoring, and the
+code will change. Read a score as a place to start looking, not as a verdict.
 
-Local privacy audit of **Chrome browser-extension crypto wallets** by their network egress.
-Ports the [@r4nk0X "IP Exposure Scorecard"](https://www.theopensourcepress.com/crypto-wallet-ip-exposure-scorecard-2026/)
-methodology — score a wallet 0–100 purely by *who it phones home to* — from mobile APKs to browser extensions.
+murmur0 watches what a Chrome extension wallet talks to over the network and scores how much
+of that traffic leaves its own infrastructure. The idea is simple: a wallet that only talks
+to its own servers is easy to trust, and one that quietly pings a dozen analytics and
+attribution services is not.
 
-**100 = good** (contacts only its own infra). **0 = bad** (leaks to many third-party analytics/attribution/crash SaaS).
+A score of 100 means the wallet contacted nothing but its own infrastructure. A score of 0
+means it leaked to many third-party analytics, attribution, and crash-reporting services.
 
-See [`PLAN.md`](./PLAN.md) for the full design, decisions, and milestones.
+See [`PLAN.md`](./PLAN.md) for the design, the decisions behind it, and the milestones.
 
 ## How it works
 
-1. Launches **Puppeteer's bundled Chrome for Testing** (vanilla — *not* Brave, whose shields would skew results) with a **fresh profile**, the wallet extension loaded, and Chrome's own phone-home suppressed.
-2. Attaches a **CDP** `Network.*` listener to every target — including the extension's **MV3 service worker** — and records every outbound request (full URLs, above TLS, no decryption).
-3. You drive the wallet through a phase (`cold` / `onboarding` / `active`).
-4. On `Ctrl-C`: classifies each contacted host as first-party / third-party SaaS / Chrome-infra, scores it, and writes a report.
+1. It launches Puppeteer's bundled Chrome for Testing (plain vanilla, not Brave, whose shields
+   would block trackers and hide what we are trying to measure). Fresh profile, the wallet
+   extension loaded, and Chrome's own phone-home traffic suppressed.
+2. It attaches a CDP `Network.*` listener to every target, including the extension's MV3
+   service worker, which is where most wallet background traffic actually originates. Every
+   outbound request is recorded with its full URL, above TLS, no decryption needed.
+3. You drive the wallet through one phase: `cold`, `onboarding`, or `active`.
+4. On `Ctrl-C` it classifies each host it saw as first-party, third-party SaaS, or Chrome's
+   own infrastructure, scores the result, and writes a report.
 
-A **pcap backstop** (`tcpdump -i pktap,Chrome` + tshark) and an opt-in `--decrypt` (SSLKEYLOGFILE) payload deep-dive are Milestone 2+ (see PLAN.md).
+A pcap backstop (`tcpdump -i pktap,Chrome` plus tshark) and an opt-in `--decrypt` payload
+deep-dive (via `SSLKEYLOGFILE`) land in Milestone 2. See PLAN.md.
 
 ## Usage
 
@@ -34,14 +41,16 @@ npm install
 ./bin/audit metamask active
 ```
 
-Artifacts land in `reports/<wallet>/<phase>/<timestamp>/`:
-`events.jsonl` (raw requests), `hosts.json` (classification), `score.json`, `report.md`.
+Artifacts land in `reports/<wallet>/<phase>/<timestamp>/`: `events.jsonl` (raw requests),
+`hosts.json` (classification), `score.json`, and `report.md`.
 
 ## Adding a wallet
 
-Drop a `wallets/<name>.json` (Chrome Web Store ID + known first-party domains). See `wallets/metamask.json`.
+Drop a `wallets/<name>.json` with the Chrome Web Store ID and the domains you know to be
+first-party. See `wallets/metamask.json` for the shape.
 
 ## Limitation
 
-Endpoint-only. Proves IP/SaaS exposure, **not** payload cleanliness — a wallet can score high and still
-leak data *inside* an encrypted first-party call. Use `--decrypt` for payload inspection.
+This is an endpoint-only audit. It proves who a wallet contacts, not what it sends. A wallet
+can score well here and still leak data inside an encrypted call to its own backend. Use
+`--decrypt` when you need to see inside the payloads.
