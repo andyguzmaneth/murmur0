@@ -113,18 +113,20 @@ Each gets a `wallets/<name>.json`: Chrome Web Store ID, known first-party domain
 
 ## Build milestones
 
-**Milestone 0 — preflight (today, ~30 min):** repo scaffold, `package.json` (puppeteer + tsx + typescript), vendor the three fingerprint lists into `fingerprints/`, write `saas-patterns.json`, verify `brew install wireshark` (tshark) + ChmodBPF + sudo tcpdump pktap works.
+**Milestone 0, preflight. DONE.** Repo scaffold, `package.json` (puppeteer + tsx + typescript), fingerprint lists vendored into `fingerprints/`, `saas-patterns.json` written. Note: Google Chrome is not installed on this Mac, so we use Puppeteer's bundled Chrome for Testing 148 (also avoids Brave's tracker-blocking shields). `tshark` is not installed yet; the pcap layer degrades gracefully without it.
 
-**Milestone 1 — end-to-end slice on MetaMask (today):**
-- `launch.ts` + `capture-cdp.ts` → produce `events.jsonl` for a manual cold-open. (pcap can come right after.)
-- Minimal `classify.ts` (curated SaaS patterns only) + `score.ts` + `report.ts`.
-- Goal: one real `report.md` for MetaMask cold-open. Validate the pipeline before scaling. (Matches the "trace the full pipeline on a minimal case first" principle.)
+**Milestone 1, end-to-end slice on MetaMask. DONE.** `launch.ts` + `capture-cdp.ts` produce `events.jsonl`; `classify.ts` + `score.ts` + `report.ts` turn it into a scored `report.md`. CRX download/unpack works (`fetch-extension.ts`). Pipeline validated on synthetic traffic.
 
-**Milestone 2 — full capture + classify:** add `capture-pcap.ts` + `parse-pcap.ts` + baseline subtraction + Tracker Radar/Exodus join + CDP↔pcap cross-check. Add onboarding + active phases.
+**Milestone 2, full capture + classify. DONE.**
+- `capture-pcap.ts` (pktap, Chrome-only, bundle id `com.google.chrome.for.testing`) + `parse-pcap.ts` (tshark SNI/DNS extraction), both gated on tooling presence.
+- Baseline subtraction: `baseline.ts` captures Chrome's own egress with no extension; `classify.ts` subtracts it.
+- Fingerprint join: curated patterns, then Disconnect `services.json`, then Exodus `network_signature` regexes. (Used Disconnect as the canonical domain/entity source instead of the full Tracker Radar repo: one clean file vs thousands, same coverage for our purposes.)
+- CDP↔pcap cross-check: hosts seen only in pcap are flagged in the report.
+- Onboarding + active phases wired in `audit.ts`.
 
-**Milestone 3, scale and compare:** run the wallet matrix and generate `comparison.md`. Sanity-check that the scores come out directionally sensible.
+**Milestone 3, scale and compare. Tooling READY.** `compare.ts` rolls every run into `reports/comparison.md`. Eleven wallets preconfigured in `wallets/` (Frame dropped: it is a desktop app, not a true extension wallet). The runs themselves are manual and need Andy at the keyboard plus sudo for pcap.
 
-**Milestone 4 (optional/later):** `--decrypt` deep-dive (SSLKEYLOGFILE → tshark payloads) for any wallet that scores suspiciously; optional report-viewer UI; consider Playwright full-automation only if manual drive proves too slow.
+**Milestone 4 (optional/later):** `--decrypt` deep-dive (SSLKEYLOGFILE to tshark payloads) is wired into `launch.ts`/`audit.ts` for any wallet that scores suspiciously; optional report-viewer UI; Playwright full-automation only if manual drive proves too slow.
 
 ---
 

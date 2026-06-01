@@ -1,0 +1,8 @@
+{
+  "name": "keplr",
+  "displayName": "Keplr",
+  "storeId": "dmkamcknogkgcdfhhbddcghachkejeap",
+  "firstPartyDomains": ["keplr.app", "keplr.xyz"],
+  "onboarding": "Create a new wallet, set a password.",
+  "notes": "Cosmos ecosystem wallet; privacy-leaning validation case."
+}

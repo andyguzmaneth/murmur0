@@ -1,0 +1,8 @@
+{
+  "name": "rabby",
+  "displayName": "Rabby",
+  "storeId": "acmacodkjbdgmoleebolmdjonilkdbch",
+  "firstPartyDomains": ["rabby.io", "debank.com"],
+  "onboarding": "Create or import a wallet, set a password.",
+  "notes": "Built by the DeBank team; DeBank backend (debank.com) is treated first-party."
+}

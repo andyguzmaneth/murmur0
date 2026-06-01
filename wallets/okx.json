@@ -1,0 +1,8 @@
+{
+  "name": "okx",
+  "displayName": "OKX Wallet",
+  "storeId": "mcohilncbfahbmgdjkbpemcciiolgcge",
+  "firstPartyDomains": ["okx.com", "okex.com"],
+  "onboarding": "Create a new wallet, set a password.",
+  "notes": "CEX-linked; expect a larger analytics/attribution surface."
+}

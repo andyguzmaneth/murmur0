@@ -1,0 +1,8 @@
+{
+  "name": "rainbow",
+  "displayName": "Rainbow",
+  "storeId": "opfgelmcmbiajamepnmloijbpoleiama",
+  "firstPartyDomains": ["rainbow.me", "rainbow.io"],
+  "onboarding": "Create a new wallet, set a password.",
+  "notes": ""
+}

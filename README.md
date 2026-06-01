@@ -29,25 +29,47 @@ See [`PLAN.md`](./PLAN.md) for the design, the decisions behind it, and the mile
 4. On `Ctrl-C` it classifies each host it saw as first-party, third-party SaaS, or Chrome's
    own infrastructure, scores the result, and writes a report.
 
-A pcap backstop (`tcpdump -i pktap,Chrome` plus tshark) and an opt-in `--decrypt` payload
-deep-dive (via `SSLKEYLOGFILE`) land in Milestone 2. See PLAN.md.
+If `tcpdump` is available, it also runs a pcap backstop on macOS's `pktap` interface, filtered
+to Chrome's process, and cross-checks it against CDP. Anything the packet capture saw that CDP
+did not gets flagged as possible out-of-band traffic. An opt-in `--decrypt` (via `SSLKEYLOGFILE`)
+lets you inspect the payloads themselves.
 
 ## Usage
 
 ```bash
 npm install
+
+# One-time: capture what Chrome contacts on its own, so wallets aren't blamed for it.
+npm run baseline
+
+# Audit a wallet through a phase, then Ctrl-C when done.
 ./bin/audit metamask cold          # or: npm run audit -- metamask cold
 ./bin/audit metamask onboarding
 ./bin/audit metamask active
+./bin/audit coinbase active --decrypt   # opt-in payload deep-dive
+
+# Roll every run up into one ranked table.
+npm run compare
 ```
 
 Artifacts land in `reports/<wallet>/<phase>/<timestamp>/`: `events.jsonl` (raw requests),
-`hosts.json` (classification), `score.json`, and `report.md`.
+`hosts.json` (classification), `score.json`, `report.md`, and `session.pcap` if the backstop ran.
+`npm run compare` writes `reports/comparison.md`.
+
+The pcap backstop needs `tshark` (`brew install wireshark`) to parse, and `sudo` to capture.
+Without them the audit still runs CDP-only.
+
+## Classification
+
+Hosts are matched in order against a curated SaaS fingerprint list, then the Disconnect and
+Exodus tracker databases (vendored in `fingerprints/`), then left as "unknown third party".
+First-party domains come from each `wallets/<name>.json`. Chrome's own infrastructure and the
+captured baseline are excluded from scoring.
 
 ## Adding a wallet
 
 Drop a `wallets/<name>.json` with the Chrome Web Store ID and the domains you know to be
-first-party. See `wallets/metamask.json` for the shape.
+first-party. See `wallets/metamask.json` for the shape. Eleven wallets ship preconfigured.
 
 ## Limitation
 

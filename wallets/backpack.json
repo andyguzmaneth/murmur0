@@ -1,0 +1,8 @@
+{
+  "name": "backpack",
+  "displayName": "Backpack",
+  "storeId": "aflkmfhebedbjioipglgcbcmnbpgliof",
+  "firstPartyDomains": ["backpack.exchange", "xnfts.dev"],
+  "onboarding": "Create a new wallet, set a password.",
+  "notes": ""
+}

@@ -1,0 +1,8 @@
+{
+  "name": "trust",
+  "displayName": "Trust Wallet",
+  "storeId": "egjidjbpglichdcondbcbdnbeeppgdph",
+  "firstPartyDomains": ["trustwallet.com", "trustwallet.io"],
+  "onboarding": "Create a new wallet, set a password.",
+  "notes": "Owned by Binance; expect a larger analytics/attribution surface."
+}

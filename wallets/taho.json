@@ -1,0 +1,8 @@
+{
+  "name": "taho",
+  "displayName": "Taho",
+  "storeId": "eajafomhmkipbjmfmhebemolkcicgfmd",
+  "firstPartyDomains": ["taho.xyz", "tally.cash"],
+  "onboarding": "Create a new wallet, set a password.",
+  "notes": "Formerly Tally Ho; community-owned, privacy-leaning validation case."
+}

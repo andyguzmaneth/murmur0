@@ -1,18 +1,13 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 import { getDomain } from "tldts";
 import type { CapturedRequest, ClassifiedHost, WalletConfig } from "./types.js";
-
-interface SaasPattern {
-  name: string;
-  category: string;
-  host: string;
-  path?: string;
-}
-interface SaasDb {
-  categories: Record<string, { penalty: number; label: string }>;
-  patterns: SaasPattern[];
-}
+import {
+  loadCurated,
+  loadDisconnect,
+  loadExodus,
+  disconnectLookup,
+  type SaasPattern,
+} from "./fingerprints.js";
+import { loadBaselineHosts } from "./baseline.js";
 
 /** Hosts that belong to Chrome itself, not the extension. Excluded from scoring. */
 const CHROME_INFRA = [
@@ -30,19 +25,14 @@ const CHROME_INFRA = [
   /(^|\.)redirector\.gvt1\.com$/,
 ];
 
-let cachedDb: SaasDb | null = null;
-async function loadDb(): Promise<SaasDb> {
-  if (cachedDb) return cachedDb;
-  const file = path.resolve("fingerprints/saas-patterns.json");
-  cachedDb = JSON.parse(await readFile(file, "utf8")) as SaasDb;
-  return cachedDb;
-}
-
 export async function classifyHosts(
   requests: CapturedRequest[],
   wallet: WalletConfig,
 ): Promise<ClassifiedHost[]> {
-  const db = await loadDb();
+  const curatedDb = await loadCurated();
+  const disconnect = await loadDisconnect();
+  const exodus = await loadExodus();
+  const baseline = await loadBaselineHosts();
   const firstParty = new Set(wallet.firstPartyDomains.map((d) => d.toLowerCase()));
 
   // group requests by host
@@ -56,39 +46,55 @@ export async function classifyHosts(
   for (const [host, reqs] of byHost) {
     const etld = (getDomain(host) ?? host).toLowerCase();
     const sampleUrls = [...new Set(reqs.map((r) => r.url))].slice(0, 3);
+    const seenIn = [...new Set(reqs.map((r) => r.source))];
 
-    let result: ClassifiedHost = {
+    const c: ClassifiedHost = {
       host,
       etldPlusOne: etld,
       party: "unknown",
       count: reqs.length,
       sampleUrls,
+      seenIn,
     };
 
-    if (CHROME_INFRA.some((re) => re.test(host))) {
-      result.party = "chrome";
+    if (CHROME_INFRA.some((re) => re.test(host)) || baseline.has(host)) {
+      c.party = "chrome";
     } else if (firstParty.has(etld)) {
-      result.party = "first";
+      c.party = "first";
     } else {
-      const match = matchSaas(db, host, reqs);
-      if (match) {
-        result.party = "third";
-        result.vendor = match.name;
-        result.category = match.category;
+      c.party = "third";
+      // Precedence: curated (most specific) -> Disconnect -> Exodus -> unknown.
+      const curatedHit = matchCurated(curatedDb.patterns, host, reqs);
+      if (curatedHit) {
+        c.vendor = curatedHit.name;
+        c.category = curatedHit.category;
+        c.matchedBy = "curated";
       } else {
-        result.party = "third";
-        result.category = "unknown";
+        const d = disconnectLookup(disconnect, host);
+        if (d) {
+          c.vendor = d.company;
+          c.category = d.category;
+          c.matchedBy = "disconnect";
+        } else {
+          const e = exodus.find((sig) => sig.regex.test(host));
+          if (e) {
+            c.vendor = e.name;
+            c.category = e.category;
+            c.matchedBy = "exodus";
+          } else {
+            c.category = "unknown";
+          }
+        }
       }
     }
-    out.push(result);
+    out.push(c);
   }
 
-  // stable sort: third parties first (by category penalty desc), then others
   return out.sort((a, b) => partyRank(a.party) - partyRank(b.party) || a.host.localeCompare(b.host));
 }
 
-function matchSaas(db: SaasDb, host: string, reqs: CapturedRequest[]): SaasPattern | null {
-  for (const p of db.patterns) {
+function matchCurated(patterns: SaasPattern[], host: string, reqs: CapturedRequest[]): SaasPattern | null {
+  for (const p of patterns) {
     let hostRe: RegExp;
     try {
       hostRe = new RegExp(p.host, "i");
@@ -120,7 +126,7 @@ function partyRank(p: string): number {
 }
 
 export async function categoryPenalty(category: string | undefined): Promise<number> {
-  const db = await loadDb();
+  const db = await loadCurated();
   if (!category) return db.categories.unknown?.penalty ?? 3;
   return db.categories[category]?.penalty ?? db.categories.unknown?.penalty ?? 3;
 }

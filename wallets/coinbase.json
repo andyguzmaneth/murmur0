@@ -1,0 +1,8 @@
+{
+  "name": "coinbase",
+  "displayName": "Coinbase Wallet",
+  "storeId": "hnfanknocfeofbddgcijnmhnfnkdnaad",
+  "firstPartyDomains": ["coinbase.com", "cbhq.net", "wallet.coinbase.com"],
+  "onboarding": "Create a new wallet, set a password. Decline cloud backup.",
+  "notes": "CEX-linked; expect a larger analytics/attribution surface."
+}

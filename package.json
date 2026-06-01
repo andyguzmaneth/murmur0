@@ -9,6 +9,8 @@
   },
   "scripts": {
     "audit": "tsx src/audit.ts",
+    "baseline": "tsx src/baseline.ts",
+    "compare": "tsx src/compare.ts",
     "fetch-ext": "tsx src/fetch-extension.ts",
     "typecheck": "tsc --noEmit"
   },

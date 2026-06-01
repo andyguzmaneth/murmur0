@@ -1,0 +1,8 @@
+{
+  "name": "zerion",
+  "displayName": "Zerion",
+  "storeId": "klghhnkeealcohjjanjjdaeeggmfmlpl",
+  "firstPartyDomains": ["zerion.io"],
+  "onboarding": "Create a new wallet, set a password.",
+  "notes": ""
+}

@@ -21,6 +21,7 @@ export interface CapturedRequest {
 }
 
 export type Party = "first" | "third" | "chrome" | "unknown";
+export type MatchSource = "curated" | "disconnect" | "exodus";
 
 export interface ClassifiedHost {
   host: string;
@@ -28,8 +29,11 @@ export interface ClassifiedHost {
   party: Party;
   vendor?: string;
   category?: string;
+  matchedBy?: MatchSource;
   count: number;
   sampleUrls: string[];
+  /** Which capture backends saw this host. */
+  seenIn: Array<"cdp" | "pcap">;
 }
 
 export interface ScoreBreakdownRow {
@@ -38,6 +42,7 @@ export interface ScoreBreakdownRow {
   party: Party;
   vendor?: string;
   category?: string;
+  matchedBy?: MatchSource;
   penalty: number;
 }
 
@@ -54,4 +59,8 @@ export interface ScoreResult {
   firstPartyHosts: string[];
   chromeHosts: string[];
   unknownThirdPartyHosts: string[];
+  /** Capture backends that contributed (cdp, pcap). */
+  captureBackends: Array<"cdp" | "pcap">;
+  /** Hosts seen by the pcap backstop but NOT by CDP: possible out-of-band traffic. */
+  pcapOnlyHosts: string[];
 }

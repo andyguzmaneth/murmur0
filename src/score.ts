@@ -26,6 +26,7 @@ export async function score(
       party: h.party,
       vendor: h.vendor,
       category: h.category,
+      matchedBy: h.matchedBy,
       penalty,
     });
   }
@@ -34,6 +35,12 @@ export async function score(
 
   const finalScore = Math.max(0, Math.min(100, Math.round(100 - penaltyTotal)));
   const thirdEtlds = new Set(thirdParty.map((h) => h.etldPlusOne));
+
+  const backends = new Set<"cdp" | "pcap">();
+  for (const h of hosts) for (const s of h.seenIn) backends.add(s);
+  const pcapOnlyHosts = hosts
+    .filter((h) => h.seenIn.includes("pcap") && !h.seenIn.includes("cdp"))
+    .map((h) => h.host);
 
   return {
     wallet: wallet.name,
@@ -48,5 +55,7 @@ export async function score(
     firstPartyHosts: hosts.filter((h) => h.party === "first").map((h) => h.host),
     chromeHosts: hosts.filter((h) => h.party === "chrome").map((h) => h.host),
     unknownThirdPartyHosts: thirdParty.filter((h) => h.category === "unknown").map((h) => h.host),
+    captureBackends: [...backends],
+    pcapOnlyHosts,
   };
 }

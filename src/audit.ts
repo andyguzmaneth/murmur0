@@ -3,6 +3,8 @@ import path from "node:path";
 import { fetchExtension } from "./fetch-extension.js";
 import { launchBrowser } from "./launch.js";
 import { CdpCapturer } from "./capture-cdp.js";
+import { PcapCapturer } from "./capture-pcap.js";
+import { parsePcap } from "./parse-pcap.js";
 import { classifyHosts } from "./classify.js";
 import { score } from "./score.js";
 import { renderReport } from "./report.js";
@@ -48,18 +50,29 @@ async function main() {
   const capturer = new CdpCapturer(browser);
   await capturer.start();
 
+  // pcap backstop (best-effort). Needs tcpdump + sudo; prompts for the sudo
+  // password in this terminal. If unavailable, we proceed CDP-only.
+  const pcapPath = path.join(reportDir, "session.pcap");
+  const pcap = new PcapCapturer(pcapPath);
+  const pcapOn = await pcap.start();
+  console.log(pcapOn ? "▸ pcap backstop on (sudo tcpdump, pktap)" : "▸ pcap backstop off (no tcpdump)");
+
   console.log("\n" + "─".repeat(64));
   console.log(PHASE_SCRIPT[phase]);
   console.log("─".repeat(64));
-  console.log("Capturing all egress (CDP). Press Ctrl-C when the phase is done.\n");
+  console.log("Capturing all egress. Press Ctrl-C when the phase is done.\n");
 
   await waitForSigint(() => capturer.count);
 
   console.log("\n▸ stopping capture …");
-  const requests = capturer.stop();
+  const cdpRequests = capturer.stop();
+  if (pcapOn) await pcap.stop();
   await browser.close().catch(() => {});
 
-  await analyze(requests, cfg, phase, timestamp, reportDir);
+  const pcapRequests = pcapOn ? await parsePcap(pcapPath) : [];
+  if (pcapOn) console.log(`▸ pcap parsed: ${pcapRequests.length} host records`);
+
+  await analyze([...cdpRequests, ...pcapRequests], cfg, phase, timestamp, reportDir);
 }
 
 async function analyze(

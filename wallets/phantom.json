@@ -1,0 +1,8 @@
+{
+  "name": "phantom",
+  "displayName": "Phantom",
+  "storeId": "bfnaelmomeimhlpmgjnjophhpkkoljpa",
+  "firstPartyDomains": ["phantom.app", "phantom.dev"],
+  "onboarding": "Create a new wallet, set a password.",
+  "notes": ""
+}

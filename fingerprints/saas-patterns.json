@@ -1,15 +1,19 @@
 {
-  "_comment": "Curated high-signal third-party SaaS fingerprints. Matched against request hostname (host regex) and optionally URL path (path regex). Penalty is taken from the category. This is the Milestone-1 layer; Tracker Radar + Exodus joins are layered on in Milestone 2.",
+  "_comment": "Curated high-signal third-party SaaS fingerprints. Matched against request hostname (host regex) and optionally URL path (path regex). Penalty is taken from the category. This curated layer takes precedence; the Disconnect + Exodus joins (classify.ts) catch the long tail.",
   "categories": {
+    "cryptomining":     { "penalty": 25, "label": "Cryptomining" },
     "session-replay":   { "penalty": 14, "label": "Session replay" },
     "attribution":      { "penalty": 12, "label": "Attribution / install tracking" },
     "ads":              { "penalty": 12, "label": "Advertising" },
     "analytics":        { "penalty": 10, "label": "Product analytics" },
     "fraud-device":     { "penalty": 10, "label": "Device fingerprinting / fraud" },
+    "social":           { "penalty": 8,  "label": "Social tracking" },
+    "email-tracking":   { "penalty": 6,  "label": "Email open / click tracking" },
     "install-id":       { "penalty": 6,  "label": "Stable install ID" },
     "crash-monitoring": { "penalty": 4,  "label": "Crash / error monitoring" },
     "remote-config":    { "penalty": 3,  "label": "Remote config" },
     "tag-manager":      { "penalty": 3,  "label": "Tag manager" },
+    "consent":          { "penalty": 2,  "label": "Consent manager" },
     "cdn":              { "penalty": 1,  "label": "Third-party CDN" },
     "unknown":          { "penalty": 3,  "label": "Unclassified third party" }
   },
