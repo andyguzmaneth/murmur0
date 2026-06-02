@@ -46,6 +46,10 @@ async function main() {
   const profileDir = path.resolve("profiles", `${cfg.name}-${phase}-${timestamp}`);
   await mkdir(reportDir, { recursive: true });
 
+  // Write our PID + report dir so an external controller can stop this run
+  // (SIGINT) when the operator finishes driving, instead of a terminal Ctrl-C.
+  await writeFile(path.resolve("reports", ".current-audit.pid"), `${process.pid}\n${reportDir}\n`);
+
   console.log(`\n▸ ${cfg.displayName}  ·  phase=${phase}${decrypt ? "  ·  --decrypt" : ""}`);
   console.log(`▸ fetching extension ${cfg.storeId} …`);
   const extPath = await fetchExtension(cfg.storeId);
@@ -109,7 +113,17 @@ async function main() {
     console.log(`Capturing for ${autoSeconds}s, then stopping automatically.\n`);
     await waitForStop(() => capturer.count, autoSeconds);
   } else {
-    console.log("Capturing all egress. Press Ctrl-C when the phase is done.\n");
+    // Interactive manual drive: open the wallet UI so the operator sees it.
+    if (phase !== "cold") {
+      const extId = await findExtensionId(browser);
+      if (extId) {
+        const np = await browser.newPage();
+        await np
+          .goto(`chrome-extension://${extId}/home.html#onboarding/welcome`, { waitUntil: "domcontentloaded" })
+          .catch(() => {});
+      }
+    }
+    console.log("Capturing all egress. Drive the wallet, then stop the run when done.\n");
     await waitForStop(() => capturer.count);
   }
 
