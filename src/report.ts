@@ -43,6 +43,38 @@ export function renderReport(r: ScoreResult): string {
     lines.push("");
   }
 
+  if (r.rpcProviders.length > 0) {
+    const top = r.rpcProviders[0]!;
+    lines.push("## RPC centralization (IP-correlation surface, not in the score)");
+    lines.push("");
+    lines.push(
+      `One RPC provider can see your IP tied to every chain it serves. The third-party ` +
+        `score does not capture this when the provider is first-party.`,
+    );
+    lines.push("");
+    for (const p of r.rpcProviders) {
+      lines.push(`- **${p.provider}**: ${p.endpoints.length} chain endpoint(s) — ${p.endpoints.join(", ")}`);
+    }
+    if (top.endpoints.length >= 3) {
+      lines.push("");
+      lines.push(`> **Heavy concentration:** ${top.endpoints.length} chains route through ${top.provider}.`);
+    }
+    lines.push("");
+  }
+
+  if (r.thirdPartyPayloads.length > 0) {
+    lines.push("## What was sent to third parties (request bodies via CDP)");
+    lines.push("");
+    for (const p of r.thirdPartyPayloads) {
+      lines.push(`**\`${p.host}\`** (${p.method}):`);
+      lines.push("");
+      lines.push("```");
+      lines.push(p.sample);
+      lines.push("```");
+      lines.push("");
+    }
+  }
+
   if (r.pcapOnlyHosts.length > 0) {
     lines.push("## Seen by pcap but NOT by CDP (possible out-of-band traffic)");
     lines.push("");

@@ -161,6 +161,16 @@ async function analyze(
   const result = await score(hosts, cfg, phase, timestamp, walletReqs.length);
   result.excludedWebRequests = webReqs.length;
   result.excludedWebHosts = webHosts;
+
+  // What did the wallet SEND to third parties? One sample body per third-party host.
+  const thirdHosts = new Set(hosts.filter((h) => h.party === "third").map((h) => h.host));
+  const seenPayload = new Set<string>();
+  for (const r of walletReqs) {
+    if (!r.postData || !thirdHosts.has(r.host) || seenPayload.has(r.host)) continue;
+    seenPayload.add(r.host);
+    result.thirdPartyPayloads.push({ host: r.host, method: r.method, sample: r.postData.slice(0, 500) });
+  }
+
   const md = renderReport(result);
 
   await writeFile(path.join(reportDir, "hosts.json"), JSON.stringify(hosts, null, 2));

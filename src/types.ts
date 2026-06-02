@@ -20,6 +20,8 @@ export interface CapturedRequest {
   /** "extension" = originated from the wallet (its SW or chrome-extension:// UI);
    *  "web" = a web page open in the same browser (NOT wallet egress). */
   scope: "extension" | "web";
+  /** Outgoing request body (POST/PUT), captured above TLS via CDP. Truncated. */
+  postData?: string;
   source: "cdp" | "pcap";
 }
 
@@ -72,4 +74,10 @@ export interface ScoreResult {
   /** Was the wallet actually used? A near-idle install tells you nothing, so a
    *  high score on an un-exercised wallet is NOT meaningful. */
   exercised: boolean;
+  /** RPC providers the wallet routed through, with how many chain endpoints each
+   *  saw. Heavy concentration = one provider correlates your IP with every chain;
+   *  an IP-exposure surface the third-party score does NOT capture. */
+  rpcProviders: Array<{ provider: string; endpoints: string[] }>;
+  /** What the wallet actually SENT to third parties (request bodies via CDP). */
+  thirdPartyPayloads: Array<{ host: string; method: string; sample: string }>;
 }

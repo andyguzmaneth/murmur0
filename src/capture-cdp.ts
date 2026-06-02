@@ -57,7 +57,7 @@ export class CdpCapturer {
     const targetIsExtension =
       targetType === "service_worker" || targetType === "background_page" || targetType === "other";
 
-    client.on("Network.requestWillBeSent", (params: any) => {
+    client.on("Network.requestWillBeSent", async (params: any) => {
       const url: string = params?.request?.url ?? "";
       if (!url.startsWith("http") && !url.startsWith("ws")) return; // skip data:, chrome-extension:, blob:
       let host = "";
@@ -72,6 +72,20 @@ export class CdpCapturer {
       const docUrl: string = params?.documentURL ?? "";
       const scope: "extension" | "web" =
         targetIsExtension || docUrl.startsWith("chrome-extension://") ? "extension" : "web";
+
+      // Outgoing request body (what the wallet sends). CDP is above TLS, so this
+      // is the cleartext payload — no decryption needed.
+      let postData: string | undefined = params?.request?.postData;
+      if (!postData && params?.request?.hasPostData && params?.requestId) {
+        try {
+          const r: any = await client.send("Network.getRequestPostData", { requestId: params.requestId });
+          postData = r?.postData;
+        } catch {
+          /* body not retainable */
+        }
+      }
+      if (postData && postData.length > 4000) postData = postData.slice(0, 4000) + "…[truncated]";
+
       this.requests.push({
         ts: typeof params.wallTime === "number" ? params.wallTime * 1000 : Date.now(),
         url,
@@ -81,6 +95,7 @@ export class CdpCapturer {
         initiator: params?.initiator?.url || params?.initiator?.type,
         targetType,
         scope,
+        postData,
         source: "cdp",
       });
     });
