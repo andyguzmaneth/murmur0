@@ -74,10 +74,16 @@ export interface ScoreResult {
   /** Was the wallet actually used? A near-idle install tells you nothing, so a
    *  high score on an un-exercised wallet is NOT meaningful. */
   exercised: boolean;
-  /** RPC providers the wallet routed through, with how many chain endpoints each
-   *  saw. Heavy concentration = one provider correlates your IP with every chain;
-   *  an IP-exposure surface the third-party score does NOT capture. */
-  rpcProviders: Array<{ provider: string; endpoints: string[] }>;
+  /** SECOND AXIS — concentration / first-party exposure. The 0-100 score above
+   *  is third-party SaaS only; this axis captures what that misses: analytics on
+   *  the vendor's own domain, and backend/RPC routed through one owner. */
+  concentrationRating: "low" | "medium" | "high";
+  /** RPC/backend endpoints grouped by who owns them (one owner = one party that
+   *  sees your IP + addresses across every chain it serves). */
+  rpcConcentration: Array<{ owner: string; endpoints: string[] }>;
+  /** Analytics/telemetry served from the wallet's OWN domains — not penalised by
+   *  the third-party score, but it is still tracking. */
+  firstPartyAnalytics: Array<{ host: string; reason: string; sample?: string }>;
   /** What the wallet actually SENT to third parties (request bodies via CDP). */
   thirdPartyPayloads: Array<{ host: string; method: string; sample: string }>;
 }

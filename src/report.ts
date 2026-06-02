@@ -43,23 +43,35 @@ export function renderReport(r: ScoreResult): string {
     lines.push("");
   }
 
-  if (r.rpcProviders.length > 0) {
-    const top = r.rpcProviders[0]!;
-    lines.push("## RPC centralization (IP-correlation surface, not in the score)");
+  if (r.rpcConcentration.length > 0 || r.firstPartyAnalytics.length > 0) {
+    lines.push(`## Second axis — concentration / first-party exposure: **${r.concentrationRating.toUpperCase()}**`);
     lines.push("");
     lines.push(
-      `One RPC provider can see your IP tied to every chain it serves. The third-party ` +
-        `score does not capture this when the provider is first-party.`,
+      "The score above is third-party SaaS only. This axis captures what that misses: " +
+        "tracking and RPC routed through the vendor's own domains. First-party is not the same as no tracking.",
     );
     lines.push("");
-    for (const p of r.rpcProviders) {
-      lines.push(`- **${p.provider}**: ${p.endpoints.length} chain endpoint(s) — ${p.endpoints.join(", ")}`);
-    }
-    if (top.endpoints.length >= 3) {
+    if (r.rpcConcentration.length > 0) {
+      lines.push("**RPC / backend routing** (one owner sees your IP + addresses across every chain it serves):");
       lines.push("");
-      lines.push(`> **Heavy concentration:** ${top.endpoints.length} chains route through ${top.provider}.`);
+      for (const p of r.rpcConcentration) {
+        lines.push(`- **${p.owner}**: ${p.endpoints.length} endpoint(s) — ${p.endpoints.join(", ")}`);
+      }
+      lines.push("");
     }
-    lines.push("");
+    if (r.firstPartyAnalytics.length > 0) {
+      lines.push("**First-party analytics** (tracking on the wallet's own domains, unscored):");
+      lines.push("");
+      for (const a of r.firstPartyAnalytics) {
+        lines.push(`- \`${a.host}\` (${a.reason})`);
+        if (a.sample) {
+          lines.push("  ```");
+          lines.push("  " + a.sample.replace(/\n/g, " "));
+          lines.push("  ```");
+        }
+      }
+      lines.push("");
+    }
   }
 
   if (r.thirdPartyPayloads.length > 0) {

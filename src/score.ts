@@ -1,34 +1,6 @@
 import { categoryPenalty } from "./classify.js";
 import type { ClassifiedHost, Phase, ScoreResult, ScoreBreakdownRow, WalletConfig } from "./types.js";
 
-/** Known RPC providers. Concentration here = one party correlates your IP with
- *  every chain you touch, an IP-exposure surface the third-party score misses. */
-const RPC_PROVIDERS: Array<{ label: string; re: RegExp }> = [
-  { label: "Infura (Consensys)", re: /(^|\.)infura\.io$/ },
-  { label: "Alchemy", re: /(^|\.)(alchemy\.com|alchemyapi\.io)$/ },
-  { label: "QuickNode", re: /(^|\.)(quiknode\.pro|quicknode\.com)$/ },
-  { label: "Ankr", re: /(^|\.)ankr\.com$/ },
-  { label: "dRPC", re: /(^|\.)drpc\.org$/ },
-  { label: "LlamaRPC", re: /(^|\.)llamarpc\.com$/ },
-  { label: "PublicNode", re: /(^|\.)publicnode\.com$/ },
-  { label: "BlastAPI", re: /(^|\.)blastapi\.io$/ },
-];
-
-function detectRpcProviders(hosts: ClassifiedHost[]): Array<{ provider: string; endpoints: string[] }> {
-  const byProvider = new Map<string, Set<string>>();
-  for (const h of hosts) {
-    for (const p of RPC_PROVIDERS) {
-      if (p.re.test(h.host)) {
-        if (!byProvider.has(p.label)) byProvider.set(p.label, new Set());
-        byProvider.get(p.label)!.add(h.host);
-      }
-    }
-  }
-  return [...byProvider.entries()]
-    .map(([provider, set]) => ({ provider, endpoints: [...set].sort() }))
-    .sort((a, b) => b.endpoints.length - a.endpoints.length);
-}
-
 /**
  * Rubric (weighted by category): start at 100, subtract a penalty per distinct
  * THIRD-PARTY host. First-party and Chrome-infra hosts are counted but never
@@ -90,7 +62,10 @@ export async function score(
     // Heuristic: a wallet that made very few requests was never really used.
     // A high score on an un-exercised wallet says nothing about its privacy.
     exercised: totalRequests >= 25,
-    rpcProviders: detectRpcProviders(hosts),
+    // Second-axis fields are populated by audit.ts (it has the request bodies).
+    concentrationRating: "low",
+    rpcConcentration: [],
+    firstPartyAnalytics: [],
     thirdPartyPayloads: [],
   };
 }

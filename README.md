@@ -64,12 +64,12 @@ Without them the audit still runs CDP-only.
 Real captures (onboarding phase, fully driven, analytics declined, CDP only). Score is
 third-party SaaS only; the RPC note is the IP-correlation surface the score does not capture.
 
-| Wallet | Score | Third parties contacted | RPC routing | Notable |
-|--------|------:|-------------------------|-------------|---------|
-| MetaMask 13.33 | 75 | Segment, Firebase Installations + FCM, Merkl, Contentful | 11 chains via Infura (Consensys) | Segment call is the "Metrics Opt Out" event (honors opt-out, leaks UA+locale); still plants a persistent Firebase install ID + FCM push token; Merkl queried with the wallet address |
-| Rabby 0.93 | 83 | Google Analytics (persistent `client_id`, tracks UI events), Sentry, Hyperliquid | proxied through `api.rabby.io` / DeBank (first-party, undetected) | Self-hosts analytics on DeBank `matomo.debank.com` + `festats.debank.com` — first-party, so unscored. GA `client_id` persists. |
+| Wallet | Score | Concentration (2nd axis) | Third parties contacted | Notable |
+|--------|------:|--------------------------|-------------------------|---------|
+| MetaMask 13.33 | 75 | **HIGH** — 11 chains via Infura (Consensys) | Segment, Firebase Installations + FCM, Merkl, Contentful | Segment call is the "Metrics Opt Out" event (honors opt-out, leaks UA+locale); still plants a persistent Firebase install ID + FCM push token; Merkl queried with the wallet address |
+| Rabby 0.93 | 83 | **MEDIUM** — DeBank `matomo` + `festats` analytics; RPC proxied via DeBank REST (no JSON-RPC fan-out) | Google Analytics (persistent `client_id`, tracks UI events), Sentry, Hyperliquid | Self-hosts analytics on DeBank — first-party, so unscored by the SaaS score. GA `client_id` persists. |
 
-**The score is third-party SaaS only.** Both wallets show why that is not the whole story: the
+**The score is third-party SaaS only; the concentration axis captures what it misses.** Both wallets show why that is not the whole story: the
 higher-scoring wallet (Rabby, 83) sends product analytics to Google with a stable id *and*
 self-hosts more analytics on its parent company's infra, which the score does not see because
 it is first-party. "First-party" is not the same as "no tracking." A future axis should flag

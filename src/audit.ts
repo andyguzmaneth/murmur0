@@ -8,6 +8,7 @@ import { parsePcap } from "./parse-pcap.js";
 import { DRIVERS, findExtensionId } from "./drivers/index.js";
 import { classifyHosts } from "./classify.js";
 import { score } from "./score.js";
+import { computeRpcConcentration, computeFirstPartyAnalytics, concentrationRating } from "./axis.js";
 import { renderReport } from "./report.js";
 import type { Phase, WalletConfig, CapturedRequest } from "./types.js";
 
@@ -176,6 +177,11 @@ async function analyze(
   const result = await score(hosts, cfg, phase, timestamp, walletReqs.length);
   result.excludedWebRequests = webReqs.length;
   result.excludedWebHosts = webHosts;
+
+  // Second axis: concentration / first-party exposure (needs request bodies).
+  result.rpcConcentration = computeRpcConcentration(walletReqs, hosts);
+  result.firstPartyAnalytics = computeFirstPartyAnalytics(walletReqs, hosts);
+  result.concentrationRating = concentrationRating(result.rpcConcentration, result.firstPartyAnalytics);
 
   // What did the wallet SEND to third parties? One sample body per third-party host.
   const thirdHosts = new Set(hosts.filter((h) => h.party === "third").map((h) => h.host));
