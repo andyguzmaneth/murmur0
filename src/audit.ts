@@ -113,14 +113,29 @@ async function main() {
     console.log(`Capturing for ${autoSeconds}s, then stopping automatically.\n`);
     await waitForStop(() => capturer.count, autoSeconds);
   } else {
-    // Interactive manual drive: open the wallet UI so the operator sees it.
+    // Interactive manual drive. Most wallets auto-open their own onboarding tab;
+    // wait for it, and only force-open a fallback if none appears (path varies
+    // per wallet, so this is best-effort — the operator can click the icon).
     if (phase !== "cold") {
       const extId = await findExtensionId(browser);
       if (extId) {
-        const np = await browser.newPage();
-        await np
-          .goto(`chrome-extension://${extId}/home.html#onboarding/welcome`, { waitUntil: "domcontentloaded" })
-          .catch(() => {});
+        let opened = false;
+        for (let i = 0; i < 6 && !opened; i++) {
+          await new Promise((r) => setTimeout(r, 1000));
+          const pages = await browser.pages();
+          opened = pages.some((p) => {
+            try {
+              return p.url().startsWith(`chrome-extension://${extId}/`);
+            } catch {
+              return false;
+            }
+          });
+        }
+        if (!opened) {
+          const np = await browser.newPage();
+          await np.goto(`chrome-extension://${extId}/home.html`, { waitUntil: "domcontentloaded" }).catch(() => {});
+          console.log("▸ wallet did not auto-open; opened its UI (click the extension icon if blank)");
+        }
       }
     }
     console.log("Capturing all egress. Drive the wallet, then stop the run when done.\n");
