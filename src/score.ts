@@ -59,5 +59,8 @@ export async function score(
     pcapOnlyHosts,
     excludedWebRequests: 0,
     excludedWebHosts: [],
+    // Heuristic: a wallet that made very few requests was never really used.
+    // A high score on an un-exercised wallet says nothing about its privacy.
+    exercised: totalRequests >= 25,
   };
 }

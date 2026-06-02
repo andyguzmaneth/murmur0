@@ -5,6 +5,7 @@ import { launchBrowser } from "./launch.js";
 import { CdpCapturer } from "./capture-cdp.js";
 import { PcapCapturer } from "./capture-pcap.js";
 import { parsePcap } from "./parse-pcap.js";
+import { DRIVERS, findExtensionId } from "./drivers/index.js";
 import { classifyHosts } from "./classify.js";
 import { score } from "./score.js";
 import { renderReport } from "./report.js";
@@ -24,6 +25,8 @@ async function main() {
   const [walletName, phaseArg] = positionals;
   const decrypt = argv.includes("--decrypt");
   const noPcap = argv.includes("--no-pcap");
+  const drive = argv.includes("--drive");
+  const metrics = argv.includes("--metrics");
   const secondsFlag = argv.findIndex((a) => a === "--seconds");
   const autoSeconds = secondsFlag >= 0 ? Number(argv[secondsFlag + 1]) : undefined;
   const phase = (phaseArg ?? "cold") as Phase;
@@ -67,7 +70,42 @@ async function main() {
   console.log("\n" + "─".repeat(64));
   console.log(PHASE_SCRIPT[phase]);
   console.log("─".repeat(64));
-  if (autoSeconds && autoSeconds > 0) {
+
+  const driver = DRIVERS[cfg.name];
+  if (drive && driver) {
+    // Scripted onboarding: actually exercise the wallet so the score reflects a
+    // used wallet, not an idle install. metrics flag picks the opt-in branch.
+    console.log(`▸ driving ${cfg.displayName} onboarding (metrics ${metrics ? "ACCEPTED" : "declined"}) …`);
+    const extId = await findExtensionId(browser);
+    if (!extId) {
+      console.log("✖ could not find extension id; is it loaded?");
+    } else {
+      // MetaMask auto-opens its own onboarding tab; open one only if missing.
+      const pages = await browser.pages();
+      const hasTab = pages.some((p) => {
+        try {
+          return p.url().includes(`${extId}/home.html`);
+        } catch {
+          return false;
+        }
+      });
+      if (!hasTab) {
+        const np = await browser.newPage();
+        await np.goto(`chrome-extension://${extId}/home.html#onboarding/welcome`, { waitUntil: "domcontentloaded" }).catch(() => {});
+      }
+      const result = await Promise.race([
+        driver(browser, extId, { metrics }),
+        new Promise<{ steps: string[]; completed: boolean }>((r) =>
+          setTimeout(() => r({ steps: ["(driver timed out after 90s)"], completed: false }), 90000),
+        ),
+      ]);
+      await writeFile(path.join(reportDir, "drive-log.txt"), result.steps.join("\n") + "\n");
+      console.log(`▸ onboarding ${result.completed ? "completed ✓" : "INCOMPLETE (see drive-log.txt)"}`);
+    }
+    const trailing = autoSeconds && autoSeconds > 0 ? autoSeconds : 20;
+    console.log(`▸ capturing ${trailing}s of trailing traffic …`);
+    await waitForStop(() => capturer.count, trailing);
+  } else if (autoSeconds && autoSeconds > 0) {
     console.log(`Capturing for ${autoSeconds}s, then stopping automatically.\n`);
     await waitForStop(() => capturer.count, autoSeconds);
   } else {

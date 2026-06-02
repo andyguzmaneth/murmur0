@@ -69,4 +69,7 @@ export interface ScoreResult {
   /** Web-page requests excluded from scoring (not wallet egress). */
   excludedWebRequests: number;
   excludedWebHosts: string[];
+  /** Was the wallet actually used? A near-idle install tells you nothing, so a
+   *  high score on an un-exercised wallet is NOT meaningful. */
+  exercised: boolean;
 }

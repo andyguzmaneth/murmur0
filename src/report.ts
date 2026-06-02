@@ -7,6 +7,13 @@ export function renderReport(r: ScoreResult): string {
   lines.push("");
   lines.push(`**Score: ${r.score}/100** (${grade})  ·  phase: \`${r.phase}\`  ·  ${r.timestamp}`);
   lines.push("");
+  if (!r.exercised) {
+    lines.push("> **[NOT MEANINGFUL] wallet barely used.** Only " + `${r.totalRequests}` + " wallet requests");
+    lines.push("> were seen, so the wallet was never really exercised (a fresh install left idle).");
+    lines.push("> A high score here means \"we didn't use it,\" not \"it's private.\" Drive the wallet");
+    lines.push("> through onboarding and active use, then re-score.");
+    lines.push("");
+  }
   lines.push(`- Total requests observed: **${r.totalRequests}**`);
   lines.push(`- Unique third-party hosts: **${r.uniqueThirdPartyHosts}** (${r.uniqueThirdPartyEtldPlusOne} distinct domains)`);
   lines.push(`- First-party hosts: ${r.firstPartyHosts.length} · Chrome-infra (excluded): ${r.chromeHosts.length}`);

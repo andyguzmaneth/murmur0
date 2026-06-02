@@ -52,6 +52,7 @@ const SEVERITY: Record<string, number> = {
   "install-id": 6,
   "crash-monitoring": 5,
   "remote-config": 4,
+  "defi-integration": 3,
   "tag-manager": 3,
   consent: 2,
   cdn: 1,

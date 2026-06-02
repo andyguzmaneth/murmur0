@@ -12,6 +12,7 @@
     "install-id":       { "penalty": 6,  "label": "Stable install ID" },
     "crash-monitoring": { "penalty": 4,  "label": "Crash / error monitoring" },
     "remote-config":    { "penalty": 3,  "label": "Remote config" },
+    "defi-integration": { "penalty": 3,  "label": "Third-party DeFi/feature API" },
     "tag-manager":      { "penalty": 3,  "label": "Tag manager" },
     "consent":          { "penalty": 2,  "label": "Consent manager" },
     "cdn":              { "penalty": 1,  "label": "Third-party CDN" },
@@ -58,6 +59,11 @@
     { "name": "Customer.io",          "category": "analytics",        "host": "(^|\\.)customer\\.io$" },
     { "name": "Intercom",             "category": "analytics",        "host": "(^|\\.)intercom\\.io$" },
 
-    { "name": "Cloudflare Insights",  "category": "analytics",        "host": "(^|\\.)cloudflareinsights\\.com$" }
+    { "name": "Cloudflare Insights",  "category": "analytics",        "host": "(^|\\.)cloudflareinsights\\.com$" },
+
+    { "name": "Contentful CMS",       "category": "cdn",              "host": "(^|\\.)(contentful\\.com|ctfassets\\.net)$" },
+    { "name": "GitHub raw (lists)",   "category": "cdn",              "host": "(^|\\.)(raw\\.githubusercontent\\.com|githubusercontent\\.com)$" },
+    { "name": "Hyperliquid (perps)",  "category": "defi-integration", "host": "(^|\\.)hyperliquid\\.xyz$" },
+    { "name": "Merkl (rewards)",      "category": "defi-integration", "host": "(^|\\.)merkl\\.xyz$" }
   ]
 }
